@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelMate | SVD Image Compressor</title>
+
+    <!-- External CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+
+<nav class="navbar">
+    <div class="logo">PixelMate<span>.</span></div>
+
+    <div class="nav-links">
+        <a href="#compress">Compress</a>
+        <a href="#results">Results</a>
+        <a href="#svd">How SVD Works</a>
+
+        <button id="themeToggle" class="theme-toggle" type="button">
+            🌙 Dark Mode
+        </button>
+    </div>
+</nav>
+
+
+
+    <!-- Main Heading -->
+    <header class="hero">
+        <p class="tagline">SMART IMAGE COMPRESSION</p>
+
+        <h1>Compress Images Using <span>SVD</span></h1>
+
+        <p>
+            Reduce image storage using Low-Rank Matrix Approximation
+            while maintaining visual quality.
+        </p>
+    </header>
+
+
+    <!-- Compression Section -->
+    <section class="container" id="compress">
+
+        <div class="section-heading">
+            <h2>Image Compressor</h2>
+            <p>Upload an image and select the compression rank.</p>
+        </div>
+
+        <form action="/compress"
+              method="POST"
+              enctype="multipart/form-data"
+              id="compressionForm">
+
+            <div class="upload-box">
+
+                <label for="imageInput" class="upload-label">
+                    <span class="upload-icon">＋</span>
+                    <h3>Choose Your Image</h3>
+                    <p>Click here to upload JPG, JPEG or PNG</p>
+                </label>
+
+                <input type="file"
+                       name="image"
+                       id="imageInput"
+                       accept=".jpg,.jpeg,.png"
+                       required>
+
+                <p id="fileName">No image selected</p>
+
+                <p class="upload-note">
+                    Maximum file size: 10 MB
+                </p>
+
+            </div>
+
+
+            <!-- Rank Slider -->
+            <div class="rank-section">
+
+                <div class="rank-heading">
+                    <label for="rankSlider">Compression Rank (k)</label>
+
+                    <span id="rankValue">50</span>
+                </div>
+
+                <input type="range"
+                       id="rankSlider"
+                       name="rank"
+                       min="1"
+                       max="200"
+                       value="50">
+
+                <div class="rank-labels">
+                    <span>Higher Compression</span>
+                    <span>Better Quality</span>
+                </div>
+
+                <p class="rank-note">
+                    Lower rank means more compression but lower image quality.
+                    Higher rank preserves more image details.
+                </p>
+
+            </div>
+
+
+            <button type="submit" id="compressButton">
+                Compress Image
+            </button>
+
+        </form>
+
+
+        <!-- Messages -->
+        {% if message %}
+            <div class="message">
+                {{ message }}
+            </div>
+        {% endif %}
+
+    </section>
+
+
+    {% if results %}
+
+    <!-- Results Section -->
+    <section class="container results-section" id="results">
+
+        <div class="section-heading">
+            <h2>Compression Results</h2>
+            <p>Your original and compressed images are shown below.</p>
+        </div>
+
+
+        <!-- Before After Comparison -->
+        <div class="comparison-section">
+
+    <h3>Before and After Comparison</h3>
+
+    <div class="image-comparison-grid">
+
+        <div class="image-card">
+            <h4>Original Image</h4>
+
+            <img
+                src="{{ url_for('static', filename=original_image) }}"
+                alt="Original Image">
+        </div>
+
+        <div class="image-card">
+            <h4>Compressed Image</h4>
+
+            <img
+                src="{{ url_for('static', filename=compressed_image) }}"
+                alt="Compressed Image">
+        </div>
+
+    </div>
+
+</div>
+
+
+        <!-- Download -->
+        <div class="download-section">
+
+            <a href="{{ url_for('static', filename=compressed_image) }}"
+               download="compressed_image.png"
+               class="download-button">
+                Download Compressed Image
+            </a>
+
+        </div>
+
+
+        <!-- Statistics -->
+        <h3 class="stats-title">Compression Statistics</h3>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <h4>Mean Squared Error</h4>
+                <p>{{ results.mse }}</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Theoretical Compression Ratio</h4>
+                <p>{{ results.compression_ratio }} : 1</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Theoretical Storage Saving</h4>
+                <p>{{ results.storage_saving }}%</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Processing Time</h4>
+                <p>{{ results.processing_time }} sec</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Original Dimensions</h4>
+                <p>
+                    {{ results.original_width }} ×
+                    {{ results.original_height }}
+                </p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Processed Dimensions</h4>
+                <p>
+                    {{ results.processed_width }} ×
+                    {{ results.processed_height }}
+                </p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Original File Size</h4>
+                <p>{{ results.original_size }} KB</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Compressed File Size</h4>
+                <p>{{ results.compressed_size }} KB</p>
+            </div>
+
+        </div>
+
+        <p class="size-note">
+            Note: Theoretical storage saving is based on matrix storage.
+            Actual file sizes also depend on image format and encoding.
+            Large images may be resized before compression.
+        </p>
+
+
+        <!-- Quality Graph -->
+        <div class="graph-section">
+
+            <h3>Rank vs Reconstruction Error</h3>
+
+            <p>
+                This graph shows how reconstruction error changes
+                with different compression ranks.
+            </p>
+
+            <img src="{{ url_for('static', filename=quality_graph) }}"
+                 alt="Rank vs Reconstruction Error Graph"
+                 class="quality-graph">
+
+            <a href="{{ url_for('static', filename=quality_graph) }}"
+               download="quality_graph.png"
+               class="download-button">
+                Download Quality Graph
+            </a>
+
+        </div>
+
+    </section>
+
+    {% endif %}
+
+
+    <!-- SVD Explanation -->
+    <section class="container svd-section" id="svd">
+
+        <div class="section-heading">
+            <h2>How SVD Works</h2>
+            <p>Understanding the mathematics behind image compression.</p>
+        </div>
+
+        <div class="svd-content">
+
+            <h3>What is Singular Value Decomposition?</h3>
+
+            <p>
+                Singular Value Decomposition (SVD) is a mathematical
+                technique used to decompose a matrix into three smaller
+                matrices: U, Σ and Vᵀ.
+            </p>
+
+            <div class="formula">
+                A = U × Σ × Vᵀ
+            </div>
+
+            <p>
+                In image compression, an image is represented as a matrix
+                of pixel values. SVD helps us identify the most important
+                information in that matrix.
+            </p>
+
+            <h3>Rank-k Approximation</h3>
+
+            <p>
+                Instead of storing all singular values, we keep only
+                the first k largest singular values and their corresponding
+                vectors.
+            </p>
+
+            <div class="formula">
+                A<sub>k</sub> = U<sub>k</sub> × Σ<sub>k</sub> × V<sup>T</sup><sub>k</sub>
+            </div>
+
+            <h3>Steps Used in This Project</h3>
+
+            <ol>
+                <li>Upload an image.</li>
+                <li>Convert the image into RGB matrices.</li>
+                <li>Apply SVD separately to each colour channel.</li>
+                <li>Keep only the first k singular values.</li>
+                <li>Reconstruct the image using rank-k approximation.</li>
+                <li>Compare the original and compressed images.</li>
+            </ol>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+        <h3>PixelMate.</h3>
+        <p>Image Compression Using Low-Rank Matrix Approximations</p>
+        <p>Developed using Python, Flask, NumPy and SVD.</p>
+    </footer>
+
+
+    <!-- External JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>
