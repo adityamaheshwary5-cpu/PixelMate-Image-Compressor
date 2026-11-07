@@ -4,7 +4,7 @@ import time
 import numpy as np
 import matplotlib
 
-# Use a non-GUI backend for Flask on Windows
+# Use a non-GUI backend for Flask
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -23,7 +23,7 @@ def compress_image(input_path, output_path, k):
     original_width, original_height = image.size
 
     # Resize large images for faster processing
-    max_dimension = 600
+    max_dimension = 300
 
     if max(image.size) > max_dimension:
         image.thumbnail((max_dimension, max_dimension))
@@ -35,7 +35,8 @@ def compress_image(input_path, output_path, k):
     print("Processed Dimensions:", width, "x", height)
 
     # Convert image into a NumPy matrix
-    image_array = np.array(image, dtype=np.float64)
+    # float32 reduces memory usage compared to float64
+    image_array = np.array(image, dtype=np.float32)
 
     height, width, channels = image_array.shape
 
@@ -93,10 +94,10 @@ def compress_image(input_path, output_path, k):
     compressed_image.save(output_path)
 
     # Calculate Mean Squared Error
-    original_array = np.array(image, dtype=np.float64)
+    original_array = np.array(image, dtype=np.float32)
 
     difference = (
-        original_array - compressed_array.astype(np.float64)
+        original_array - compressed_array.astype(np.float32)
     )
 
     mse = np.mean(difference ** 2)
@@ -190,7 +191,7 @@ def compress_image(input_path, output_path, k):
     print("\n========== COMPRESSION RESULTS ==========")
 
     print("Selected Rank:", k)
-    print("Mean Squared Error:", round(mse, 2))
+    print("Mean Squared Error:", round(float(mse), 2))
 
     print(
         "Theoretical Compression Ratio:",
@@ -222,7 +223,7 @@ def compress_image(input_path, output_path, k):
 
     # Return all results to Flask
     return {
-        "mse": round(mse, 2),
+        "mse": round(float(mse), 2),
         "compression_ratio": round(compression_ratio, 2),
         "storage_saving": round(storage_saving, 2),
         "original_size": round(original_size / 1024, 2),
